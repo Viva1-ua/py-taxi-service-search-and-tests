@@ -6,7 +6,7 @@ from django.views import generic
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .models import Driver, Car, Manufacturer
-from .forms import DriverCreationForm, DriverLicenseUpdateForm, CarForm
+from .forms import DriverCreationForm, DriverLicenseUpdateForm, CarForm, DriverSearchForm
 
 
 @login_required
@@ -84,6 +84,21 @@ class CarDeleteView(LoginRequiredMixin, generic.DeleteView):
 class DriverListView(LoginRequiredMixin, generic.ListView):
     model = Driver
     paginate_by = 5
+
+    def get_context_data(self, **kwargs):
+        context = super(DriverListView, self).get_context_data(**kwargs)
+        title = self.request.GET.get("title", "")
+        context["search_form"] = DriverSearchForm(
+            initial={"title": title}
+        )
+        return context
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        title = self.request.GET.get("title")
+        if title:
+            queryset = queryset.filter(title__icontains=title)
+        return queryset
 
 
 class DriverDetailView(LoginRequiredMixin, generic.DetailView):
